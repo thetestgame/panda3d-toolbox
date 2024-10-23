@@ -10,7 +10,7 @@ setup(
     version=__version__,
     author='Jordan Maxwell',
     maintainer='Jordan Maxwell',
-    url='https://github.com/NxtStudios/panda3d-toolbox',
+    url='https://github.com/thetestgame/panda3d-toolbox',
     packages=['panda3d_toolbox'],
     classifiers=[
         'Programming Language :: Python :: 3',
