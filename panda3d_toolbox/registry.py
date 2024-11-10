@@ -18,8 +18,11 @@ class ClassRegistry(Singleton):
     notify = directNotify.newCategory('registry')
 
     def __init__(self):
-        super().__init__(self)
-        
+        """
+        Initializes the class registry singleton
+        """
+
+        super().__init__()
         self._classes = {}
 
     @property
