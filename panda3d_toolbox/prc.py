@@ -1,4 +1,11 @@
-from six import with_metaclass
+"""
+This module serves as a wrapper for the Panda3D runtime configuration system. It provides
+a set of functions for loading, setting, and retrieving configuration values from the
+Panda3D runtime configuration system.
+
+The module also provides load functions for standardized sets of configuration values
+such as for headless applications.
+"""
 
 from panda3d.core import ConfigVariable, ConfigVariableList, ConfigVariableString
 from panda3d.core import ConfigVariableFilename, ConfigVariableBool, ConfigVariableInt
@@ -7,13 +14,13 @@ from panda3d.core import ConfigVariableSearchPath, ConfigFlags, Filename
 from panda3d.core import load_prc_file as _load_prc_file
 from panda3d.core import load_prc_file_data as _load_prc_file_data
 
-from direct.directnotify.DirectNotifyGlobal import directNotify
-from panda3d_toolbox import runtime
-from panda3d_vfs import path_exists
+from direct.directnotify.DirectNotifyGlobal import directNotify as __directNotify
+from panda3d_toolbox import runtime as __runtime
+from panda3d_vfs import path_exists as __path_exists
 
 #----------------------------------------------------------------------------------------------------------------------------------#
 
-__prc_notify = directNotify.newCategory('prc')
+__prc_notify = __directNotify.newCategory('prc')
 __prc_notify.setInfo(True)
 
 def load_prc_file_data(data: str, label: str = '') -> None:
@@ -28,7 +35,7 @@ def load_prc_file_data(data: str, label: str = '') -> None:
 
     # Check if the base has already been defined
     # if it has been defined warn the user.
-    if runtime.has_base():
+    if __runtime.has_base():
         __prc_notify.warning('Showbase has already been defined. PRC changes may be ignored')
 
     if label != '' and label.isspace() == False:
@@ -43,15 +50,15 @@ def load_prc_file(path: str, optional: bool = False) -> bool:
 
     # Check if the base has already been defined
     # if it has been defined warn the user.
-    if runtime.has_base():
+    if __runtime.has_base():
         __prc_notify.warning('Showbase has already been defined. PRC changes may be ignored')
 
-    if not path_exists(path) and not optional:
+    if not __path_exists(path) and not optional:
         __prc_notify.error('Failed to load prc file: %s. File does not exist' % path)
         return False
     
     # Return if the path does not exist and we are optional
-    if not path_exists(path) and optional:
+    if not __path_exists(path) and optional:
         __prc_notify.warning('Skipping optional prc: %s' % path)
         return False
 
@@ -62,6 +69,23 @@ def load_prc_file(path: str, optional: bool = False) -> bool:
     
     _load_prc_file(Filename.from_os_specific(path))
     return True
+
+def load_headless_prc_data(label: str = 'headless-config') -> None:
+    """
+    Loads the standard prc configuration values used for headless
+    applications built with the Panda3D engine
+    """
+
+    prc_data = """
+        # Disable window
+        window-type none
+
+        # Disable audio
+        audio-library-name null
+        audio-active false
+    """
+
+    load_prc_file_data(prc_data, label)
 
 def get_prc_list(key: str) -> list:
     """
