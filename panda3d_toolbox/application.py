@@ -5,6 +5,8 @@ are extensions of the ShowBase class provided by the Panda3D engine.
 """
 
 import sys
+import builtins
+import traceback
 
 from direct.directnotify.DirectNotifyGlobal import directNotify
 from direct.showbase.ShowBase import ShowBase
@@ -13,7 +15,7 @@ from panda3d import core as p3d
 from panda3d_toolbox import runtime, prc
 import panda3d_vfs as vfs
 
-class ApplicationBase(ShowBase):
+class Application(ShowBase):
     """
     Custom ShowBase instance for creating standardized applications
     using the Panda3D game engine
@@ -27,19 +29,19 @@ class ApplicationBase(ShowBase):
         self.load_runtime_configuration()
         ShowBase.__init__(self, *args, **kwargs)
         self.notify = directNotify.newCategory('showbase')
+        self.exit_code = 0
 
         self.set_developer_flag()
         self.set_antialias(prc.get_prc_bool('render-antialias', True))
         self.__showing_frame_rate = prc.get_prc_bool('show-frame-rate-meter', False)
 
         runtime.base = self
-        runtime.task_mgr = self.task_mgr
+        runtime.task_mgr = self.taskMgr
         runtime.loader = self.loader
         runtime.cam = self.cam
         runtime.camera = self.camera
 
         self.configure_virtual_file_system()
-        self.accept('f1', self.render.ls)
     
     def load_runtime_configuration(self) -> None:
         """
@@ -56,20 +58,21 @@ class ApplicationBase(ShowBase):
         and the current compiled state of the application.
         """
 
-        is_compiled = False # TODO: 
+        is_compiled = runtime.is_built_executable()
         want_dev = prc.get_prc_bool('want-dev', is_compiled)
-
-        runtime.dev = want_dev
-        __dev__ = want_dev
+        builtins.__dev__ = want_dev
 
     def configure_virtual_file_system(self) -> None:
         """
         Configures the virtual file system for the application
         """
     
-        # TODO: mount a multifile when we are running
-        # under a compiled build
-        vfs.vfs_mount_directory('.', 'assets')
+        if not runtime.is_built_executable():
+            vfs.vfs_mount_directory('.', 'assets')
+        else:
+            multifiles = prc.get_prc_list('vfs-multifile')
+            for multifile in multifiles:
+                vfs.vfs_mount_multifile('.', multifile)
 
         vfs.switch_file_functions_to_vfs()
         vfs.switch_io_functions_to_vfs()
@@ -209,7 +212,35 @@ class ApplicationBase(ShowBase):
 
         self.exitFunc = func
 
-class HeadlessApplication(ApplicationBase):
+    def set_exit_code(self, code: int) -> None:
+        """
+        Sets the exit code for the application
+        """
+
+        # if the exit code provided is an enum get the value
+        if hasattr(code, 'value'):
+            code = code.value
+
+        # set the exit code
+        self.exit_code = code
+
+    def execute(self) -> int:
+        """
+        Calls the Panda3D ShowBase run() method with automatic
+        error handling and exit code return.
+        """
+
+        try:
+            self.run()
+        except Exception as e:
+            self.notify.error('An error occurred during execution: %s' % e)
+            self.notify.error(traceback.format_exc())
+
+            self.exit_code = 1
+
+        return self.exit_code
+
+class HeadlessApplication(Application):
     """
     Headless varient of the ApplicationBase object. Creates
     without a primary window instance
@@ -221,6 +252,4 @@ class HeadlessApplication(ApplicationBase):
         """
 
         prc.load_headless_prc_data()
-        
-        kwargs['windowType'] = 'none'
         super().__init__(*args, **kwargs)

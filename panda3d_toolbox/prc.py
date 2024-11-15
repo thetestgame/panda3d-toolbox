@@ -7,6 +7,8 @@ The module also provides load functions for standardized sets of configuration v
 such as for headless applications.
 """
 
+import os as __os
+
 from panda3d.core import ConfigVariable, ConfigVariableList, ConfigVariableString
 from panda3d.core import ConfigVariableFilename, ConfigVariableBool, ConfigVariableInt
 from panda3d.core import ConfigVariableDouble, ConfigVariableColor, ConfigVariableInt64
@@ -16,6 +18,7 @@ from panda3d.core import load_prc_file_data as _load_prc_file_data
 
 from direct.directnotify.DirectNotifyGlobal import directNotify as __directNotify
 from panda3d_toolbox import runtime as __runtime
+from panda3d_toolbox import utils as __utils
 from panda3d_vfs import path_exists as __path_exists
 
 #----------------------------------------------------------------------------------------------------------------------------------#
@@ -87,9 +90,69 @@ def load_headless_prc_data(label: str = 'headless-config') -> None:
 
     load_prc_file_data(prc_data, label)
 
+def get_launch_double(key: str, default: int = 0) -> float:
+    """
+    Retrieves a double variable from the environment variables if present. Otherwise
+    we attempt to retrieve the value from the Panda runtime configuration. If the value
+    is not found we return the default value.
+
+    The key is converted to snake case and upper case for the environment variable.
+    Example test-variable becomes TEST_VARIABLE.
+    """
+
+    environment_key = __utils.get_snake_case(key).upper()
+    prc_variable = ConfigVariableDouble(key, default)
+    launch_value = float(__os.environ.get(environment_key, str(prc_variable.get_value())))
+    return launch_value
+
+def get_launch_int(key: str, default: int = 0) -> int:
+    """
+    Retrieves a int variable from the environment variables if present. Otherwise
+    we attempt to retrieve the value from the Panda runtime configuration. If the value
+    is not found we return the default value.
+
+    The key is converted to snake case and upper case for the environment variable.
+    Example test-variable becomes TEST_VARIABLE.
+    """
+
+    environment_key = __utils.get_snake_case(key).upper()
+    prc_variable = ConfigVariableInt(key, default)
+    launch_value = int(__os.environ.get(environment_key, str(prc_variable.get_value())))
+    return launch_value
+
+def get_launch_string(key: str, default: str = '') -> str:
+    """
+    Retrieves a string variable from the environment variables if present. Otherwise
+    we attempt to retrieve the value from the Panda runtime configuration. If the value
+    is not found we return the default value.
+
+    The key is converted to snake case and upper case for the environment variable.
+    Example test-variable becomes TEST_VARIABLE.
+    """
+
+    environment_key = __utils.get_snake_case(key).upper()
+    prc_variable = ConfigVariableString(key, default)
+    launch_value = __os.environ.get(environment_key, prc_variable.get_value())
+    return launch_value
+
+def get_launch_bool(key: str, default: bool = False) -> bool:
+    """
+    Retrieves a boolean variable from the environment variables if present. Otherwise
+    we attempt to retrieve the value from the Panda runtime configuration. If the value
+    is not found we return the default value.
+
+    The key is converted to snake case and upper case for the environment variable.
+    Example test-variable becomes TEST_VARIABLE.
+    """
+
+    environment_key = __utils.get_snake_case(key).upper()
+    prc_variable = ConfigVariableBool(key, default)
+    launch_value = bool(__os.environ.get(environment_key, str(prc_variable.get_value())))
+    return launch_value
+
 def get_prc_list(key: str) -> list:
     """
-    Retrieves a int variable from the Panda3D
+    Retrieves a list variable from the Panda3D
     runtime configuration if present. Otherwise
     the default value
     """

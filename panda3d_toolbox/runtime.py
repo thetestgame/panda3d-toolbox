@@ -4,10 +4,6 @@ import os as __os
 
 #----------------------------------------------------------------------------------------------------------------------------------#
 
-dev = False
-
-#----------------------------------------------------------------------------------------------------------------------------------#
-
 def __get_base_executable_name() -> str:
     """
     Returns the base executable name
@@ -58,7 +54,7 @@ def is_developer_build() -> bool:
     running as a developer build
     """
     
-    return (dev or is_interactive()) and not is_frozen()
+    return (builtins.__dev__ or is_interactive()) and not is_frozen()
 
 def is_production_build() -> bool:
     """
@@ -74,20 +70,17 @@ def get_repository() -> object:
     if either exist. Otherwise returning NoneType
     """
 
-    if __has_variable('cr'):
-        return __get_variable('cr')
-    elif __has_variable('air'):
-        return __get_variable('air')
-    else:
+    module = __get_module()
+    if not module.has_base():
         return None
     
-def is_nuitka_build() -> bool:
-    """
-    Returns true if the application is currently
-    running as a Nuitka build
-    """
-
-    return 'NUITKA' in __os.environ
+    base = module.get_base()
+    if hasattr(base, 'air'):
+        return base.air
+    elif hasattr(base, 'cr'):
+        return base.cr
+    else:
+        raise AttributeError('base has no repository object')
 
 def is_panda3d_build() -> bool:
     """
@@ -103,7 +96,9 @@ def is_built_executable() -> bool:
     running as a built executable
     """
 
-    return is_panda3d_build() or is_nuitka_build()
+    compiled = is_panda3d_build()
+
+    return compiled
 
 #----------------------------------------------------------------------------------------------------------------------------------#
 
