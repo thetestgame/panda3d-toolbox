@@ -5,6 +5,7 @@ import datetime
 import itertools
 import datetime
 import types
+import math
 import gc
 import functools
 
@@ -44,7 +45,7 @@ def open_web_url(url: str) -> bool:
     success = False
     if sys.platform == 'darwin':
         os.system('/usr/bin/open %s' % url)
-    elif system.platform == 'linux':
+    elif sys.platform == 'linux':
         import webbrowser
         webbrowser.open(url)
         success = True
@@ -467,3 +468,36 @@ def do_method_after_n_frames(frames_to_wait: int, method: object, args: list = [
         create_task(_DoMethodAfterNFrames(frames_to_wait, method, args).task_func, priority=priority)
     else:
         __utility_notify.error('Invalid request. do_method_after_n_frames received a frames wait of 0')
+
+def set_setters_from_dict(obj: object, data: dict) -> None:
+    """
+    Sets the attributes of an object from a dictionary. 
+    The dictionary keys should match the object's setter methods.
+
+    IE. name -> set_name(self, name)
+    """
+
+    for key, value in data.items():
+        setter = f"set_{get_snake_case(key)}"
+        if not hasattr(obj, setter):
+            raise AttributeError(
+                f"Object {obj} does not have a setter for {key}")
+
+        getattr(obj, setter)(value)
+
+def calculate_circle_edge_point(center: Vec3, diameter: float, angle_degrees: float) -> Vec3:
+    """
+    Calculate the point on the edge of a circle given the center, diameter, and angle.
+    """
+
+    # Calculate radius
+    radius = diameter / 2
+
+    # Convert angle to radians
+    angle_radians = math.radians(angle_degrees)
+
+    # Calculate the x and y coordinates of the point on the edge
+    x = center.get_x() + radius * math.cos(angle_radians)
+    y = center.get_y() + radius * math.sin(angle_radians)
+
+    return Vec3(x, y, center.get_z())
